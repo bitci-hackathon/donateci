@@ -28,20 +28,20 @@ const listings = [
 export default function Home() {
   return (
     <Layout>
-      <>
-        <form className="group sticky top-0 z-50 bg-white px-4 sm:px-6 lg:px-10 shadow">
+
+      <form className="group sticky top-0 z-50 bg-white px-4 sm:px-6 lg:px-10 shadow rounded">
         <div className="max-w-10xl mx-auto flex">
           <label htmlFor="search-input" className="flex-none pr-2 flex items-center">
             <span className="sr-only">Search all Creators</span>
-            <SearchIcon  className="h-6 w-6" aria-hidden="true"></SearchIcon>
+            <SearchIcon className="h-6 w-6" aria-hidden="true"></SearchIcon>
           </label>
-          <input type="text" id="search-input" value="" placeholder="Search all Creators" 
-          className="flex-auto py-4 text-base leading-6 text-gray-500 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400"/>
+          <input type="text" id="search-input" value="" placeholder="Search all Creators"
+            className="flex-auto py-4 text-base leading-6 text-gray-500 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400" />
         </div>
-        </form>
-      </>
-    
-      <div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+      </form>
+
+
+      <div className="mt-5 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
 
         {listings.map((listing) => (
           <ListingItem key={listing.id} listing={listing} />
