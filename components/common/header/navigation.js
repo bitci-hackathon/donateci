@@ -7,6 +7,10 @@ import { useWeb3React, Web3ReactProvider } from "@web3-react/core";
 import useEagerConnect from "../../../hooks/useEagerConnect";
 import Account from "../../Account";
 import { getCurrentUser } from "../../modules/auth";
+import { doc } from "@firebase/firestore";
+import { setDoc, getDoc, addDoc } from "firebase/firestore";
+import { firestore } from "../../modules/firestore";
+
 
 const navigations = [
   { name: "Dashboard", href: "/", current: true },
@@ -34,9 +38,45 @@ const Navigation = () => {
 
   const user = getCurrentUser();
 
-  useEffect(() => {
+  const onLoggedIn = async () => {
+  
+    const userDocument = doc(firestore, `users`, account);
 
+    const user = await getDoc(userDocument);
+
+    if (!user.exists()) {
+      const userData = {
+        id: account,
+        is_creator: false,
+        name: "",
+        surname: "",
+        picture_url: "",
+        is_signatured: false,
+        social_links: [
+          {
+            id: "twitch",
+            link: "",
+          },
+        ],
+      };
+
+      await setDoc(userDocument, userData)
+        .then(() => {
+          console.log(userData);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  };
+
+  useEffect(() => {
+    if(isConnected){
+      onLoggedIn();
+    }
   }, [isConnected])
+
+
   return (
     <Disclosure as="nav" className="bg-gray-800">
       {({ open }) => (

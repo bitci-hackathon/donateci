@@ -5,9 +5,6 @@ import { injected } from "../connectors";
 import useENSName from "../hooks/useENSName";
 import useMetaMaskOnboarding from "../hooks/useMetaMaskOnboarding";
 import { formatEtherscanLink, shortenHex } from "../util";
-import { doc } from "@firebase/firestore";
-import { setDoc, getDoc, addDoc } from "firebase/firestore";
-import { firestore } from "./modules/firestore";
 
 const Account = ({ triedToEagerConnect }) => {
   const { active, error, activate, chainId, account, library, setError } =
@@ -22,6 +19,8 @@ const Account = ({ triedToEagerConnect }) => {
 
   // manage connecting state for injected connector
   const [connecting, setConnecting] = useState(false);
+  const ENSName = useENSName(account);
+
   useEffect(() => {
     if (active || error) {
       setConnecting(false);
@@ -29,55 +28,6 @@ const Account = ({ triedToEagerConnect }) => {
     }
   }, [active, error, stopOnboarding]);
 
-  const ENSName = useENSName(account);
-
-  if (error) {
-    return null;
-  }
-
-  if (!triedToEagerConnect) {
-    return null;
-  }
-
-  useEffect(() => {
-      console.log(account)
-    if (typeof account !== "string") return;
-
-    onLoggedIn(account);
-  }, [account]);
-
-  const onLoggedIn = async (account) => {
-    console.log(account);
-    const userDocument = doc(firestore, `users`, account);
-
-    const user = await getDoc(userDocument);
-
-    if (user.exists()) {
-    } else {
-      const userData = {
-        id: account,
-        is_creator: false,
-        name: "",
-        surname: "",
-        picture_url: "",
-        is_signatured: false,
-        social_links: [
-          {
-            id: "twitch",
-            link: "",
-          },
-        ],
-      };
-
-      await addDoc(userDocument, userData)
-        .then(() => {
-          console.log(userData);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-  };
   const connect = () => {
     setConnecting(true);
 
@@ -110,6 +60,14 @@ const Account = ({ triedToEagerConnect }) => {
           })*/
       });
   };
+
+  if (error) {
+    return null;
+  }
+
+  if (!triedToEagerConnect) {
+    return null;
+  }
 
   if (typeof account !== "string") {
     return (
