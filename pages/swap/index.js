@@ -1,7 +1,10 @@
+import { ArrowCircleDownIcon, ArrowCircleUpIcon } from "@heroicons/react/outline";
+import { useState } from "react";
 import Layout from "../../components/common/layout";
 import TokenSelect from "../../components/swap/token-select";
 
 export default function Swap() {
+    const [rotate,setRotate] = useState(true);
 
     const tokens = [
         {
@@ -36,6 +39,7 @@ export default function Swap() {
                     <div className="">
                         <div className="w-full space-y-6">
                             <TokenSelect tokens={tokens}></TokenSelect>
+
                             <div className="w-full">
                                 <div className=" relative ">
                                     <input type="text" id="search-form-location" 
@@ -43,9 +47,14 @@ export default function Swap() {
                                     placeholder="0.0" />
                                 </div>
                             </div>
-                            <div className="block text-sm font-medium text-gray-700">
-                                    to
+
+                            <div className="flex justify-center ">
+                                <button onClick={() => setRotate(!rotate)} className="focus:outline-none text-white text-sm py-2 px-2 rounded-full bg-indigo-500 hover:bg-indigo-600 hover:shadow-lg">
+                                    { rotate ? <ArrowCircleDownIcon className="h-6 w-6" aria-hidden="true"/> : <ArrowCircleUpIcon className="h-6 w-6" aria-hidden="true"/> }
+                                    
+                                </button>
                             </div>
+
                             <TokenSelect tokens={tokens}></TokenSelect>
                             
                             <div className="w-full">

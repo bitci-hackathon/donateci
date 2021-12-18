@@ -1,5 +1,6 @@
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { BellIcon, MenuIcon, XIcon } from "@heroicons/react/outline";
+import { useRouter } from "next/router";
 import { Fragment } from 'react'
 
 const user = {
@@ -26,6 +27,8 @@ const user = {
   }
   
 const Navigation = () => {
+    const router = useRouter();
+
     return(
         <Disclosure as="nav" className="bg-gray-800">
         {({ open }) => (
@@ -47,12 +50,12 @@ const Navigation = () => {
                           key={item.name}
                           href={item.href}
                           className={classNames(
-                            item.current
+                            router.pathname == item.href
                               ? 'bg-gray-900 text-white'
                               : 'text-gray-300 hover:bg-gray-700 hover:text-white',
                             'px-3 py-2 rounded-md text-sm font-medium'
                           )}
-                          aria-current={item.current ? 'page' : undefined}
+                          aria-current={router.pathname == item.href ? 'page' : undefined}
                         >
                           {item.name}
                         </a>

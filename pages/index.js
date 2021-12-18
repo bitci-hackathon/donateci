@@ -29,7 +29,7 @@ export default function Home() {
   return (
     <Layout>
 
-      <form className="group sticky top-0 z-50 bg-white px-4 sm:px-6 lg:px-10 shadow rounded">
+      <form className="group bg-white px-4 sm:px-6 lg:px-10 shadow rounded">
         <div className="max-w-10xl mx-auto flex">
           <label htmlFor="search-input" className="flex-none pr-2 flex items-center">
             <span className="sr-only">Search all Creators</span>
