@@ -14,8 +14,8 @@ const Layout = ({ children }) => {
                 </main>
             <Footer />
         </div>
-      </>
       </Web3ReactProvider>
+      </>
     );
   }
   
