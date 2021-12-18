@@ -4,6 +4,7 @@ import Header from "./header/header";
 const Layout = ({ children }) => {
     return (
       <>
+      <Web3ReactProvider getLibrary={getLibrary}>
         <div className="min-h-full">
             <Header />    
                 <main>
@@ -14,6 +15,7 @@ const Layout = ({ children }) => {
             <Footer />
         </div>
       </>
+      </Web3ReactProvider>
     );
   }
   
