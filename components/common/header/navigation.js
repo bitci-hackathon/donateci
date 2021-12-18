@@ -2,12 +2,13 @@ import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { BellIcon, MenuIcon, XIcon } from "@heroicons/react/outline";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useState } from "react";
-import { login, logout, checkAuth, getCurrentUser } from "../../modules/auth";
-import { useWeb3React, Web3ReactProvider } from "@web3-react/core";
-import { InjectedConnector } from '@web3-react/injected-connector'
-import { Web3Provider } from '@ethersproject/providers'
 
-const navigation = [
+import { useWeb3React, Web3ReactProvider } from "@web3-react/core";
+import useEagerConnect from "../../../hooks/useEagerConnect";
+import Account from "../../Account";
+import { getCurrentUser } from "../../modules/auth";
+
+const navigations = [
   { name: "Dashboard", href: "/", current: true },
   { name: "Swap", href: "/swap", current: false },
   { name: "Projects", href: "#", current: false },
@@ -25,46 +26,43 @@ function classNames(...classes) {
 }
 
 const Navigation = () => {
-  
-const { active, account, library, connector, activate, deactivate } =
-useWeb3React();
-
+  const { active, account, library, connector, activate, deactivate } =    useWeb3React();
+  const triedEagerConnect = useEagerConnect();
   const router = useRouter();
-
+/*
   const [isLoggedin, setLoggedin] = useState(false);
 
   const user = getCurrentUser();
 
   useEffect(() => {
-    setLoggedin(checkAuth);
+    //setLoggedin(checkAuth);
   }, []);
 
-  async function connect() {
-
-    let injector = new InjectedConnector({
-      supportedChainIds: [1, 3, 4, 5, 42],
-    });
-
-    try {
-      await activate(injector);
-    } catch (ex) {
-      console.log(ex);
-    }
-  }
-  
   async function disconnect() {
     try {
       deactivate();
     } catch (ex) {
       console.log(ex);
     }
-  }
+  }*/
 
-  function getLibrary(provider: any): Web3Provider {
-    const library = new Web3Provider(provider)
-    library.pollingInterval = 12000
-    return library
-  }
+  const isConnected = typeof account === "string" && !!library;
+
+  const user = getCurrentUser();
+
+  useEffect(() => {
+    /*if(isConnected){
+      const msg = "We ask you to sign this message to prove ownership of this account: "+account+" (" + Math.floor(new Date().getTime() / 1000) + ")";
+      library.getSigner(account)
+      .signMessage(msg)
+      .then((signature) => {
+        window.alert(`Success!\n\n${signature}`)
+      })
+      .catch((error) => {
+        window.alert('Failure!' + (error && error.message ? `\n\n${error.message}` : ''))
+      })
+    }*/
+  }, [isConnected])
   return (
     <Disclosure as="nav" className="bg-gray-800">
       {({ open }) => (
@@ -81,7 +79,7 @@ useWeb3React();
                 </div>
                 <div className="hidden md:block">
                   <div className="ml-10 flex items-baseline space-x-4">
-                    {navigation.map((item) => (
+                    {navigations.map((item) => (
                       <a
                         key={item.name}
                         href={item.href}
@@ -102,7 +100,7 @@ useWeb3React();
                 </div>
               </div>
               <div className="hidden md:block">
-                {isLoggedin ? (
+                {isConnected ? (
                   <>
                     <div className="ml-4 flex items-center md:ml-6">
                       <button
@@ -139,7 +137,8 @@ useWeb3React();
                               <Menu.Item key={item.name}>
                                 {({ active }) => (
                                   <a
-                                    href={item.href}
+                                    /*href={item.href}*/
+                                    onClick={() => deactivate()}
                                     className={classNames(
                                       active ? "bg-gray-100" : "",
                                       "block px-4 py-2 text-sm text-gray-700"
@@ -156,12 +155,7 @@ useWeb3React();
                     </div>
                   </>
                 ) : (
-                  <button
-                    className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-md text-sm font-medium"
-                    onClick={connect}
-                  >
-                    Login with Metamask
-                  </button>
+                  <Account triedToEagerConnect={triedEagerConnect} />
                 )}
               </div>
               <div className="-mr-2 flex md:hidden">
@@ -180,7 +174,7 @@ useWeb3React();
 
           <Disclosure.Panel className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              {navigation.map((item) => (
+              {navigations.map((item) => (
                 <Disclosure.Button
                   key={item.name}
                   as="a"
@@ -198,7 +192,7 @@ useWeb3React();
               ))}
             </div>
 
-            {isLoggedin ? (
+            {isConnected ? (
               <>
                 <div className="pt-4 pb-3 border-t border-gray-700">
                   <div className="flex items-center px-5">
@@ -240,18 +234,13 @@ useWeb3React();
                 </div>
               </>
             ) : (
-              <button
-                className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-md text-sm font-medium"
-                onClick={connect}
-              >
-                Login with Metamask
-              </button>
+              <Account triedToEagerConnect={triedEagerConnect} />
             )}
           </Disclosure.Panel>
         </>
       )}
     </Disclosure>
-    </Web3ReactProvider>
   );
-};
+            };
+
 export default Navigation;
