@@ -29,39 +29,13 @@ const Navigation = () => {
   const { active, account, library, connector, activate, deactivate } =    useWeb3React();
   const triedEagerConnect = useEagerConnect();
   const router = useRouter();
-/*
-  const [isLoggedin, setLoggedin] = useState(false);
-
-  const user = getCurrentUser();
-
-  useEffect(() => {
-    //setLoggedin(checkAuth);
-  }, []);
-
-  async function disconnect() {
-    try {
-      deactivate();
-    } catch (ex) {
-      console.log(ex);
-    }
-  }*/
 
   const isConnected = typeof account === "string" && !!library;
 
   const user = getCurrentUser();
 
   useEffect(() => {
-    /*if(isConnected){
-      const msg = "We ask you to sign this message to prove ownership of this account: "+account+" (" + Math.floor(new Date().getTime() / 1000) + ")";
-      library.getSigner(account)
-      .signMessage(msg)
-      .then((signature) => {
-        window.alert(`Success!\n\n${signature}`)
-      })
-      .catch((error) => {
-        window.alert('Failure!' + (error && error.message ? `\n\n${error.message}` : ''))
-      })
-    }*/
+
   }, [isConnected])
   return (
     <Disclosure as="nav" className="bg-gray-800">
