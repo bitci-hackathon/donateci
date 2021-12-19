@@ -5,6 +5,9 @@ import Layout from '../components/common/layout'
 import ListingItem from '../components/listing/item'
 import DONATECILISTING_ABI from "../contracts/DonateciListing.json";
 import useContract from '../hooks/useContract';
+import { doc } from "@firebase/firestore";
+import { setDoc, getDoc, addDoc } from "firebase/firestore";
+import { firestore } from "../components/modules/firestore";
 
 const listings = [
   {
@@ -32,23 +35,70 @@ export default function Home() {
 
   const { active, account, library, connector, activate, deactivate } =    useWeb3React();
   const [creatorCount,setCretorCount] = useState("1");
-  const [creatorListing,setCreatorListing] = useState();
+  const [creatorListing,setCreatorListing] = useState([]);
   const isConnected = typeof account === "string" && !!library;
+
   const contract = useContract("0x6143dC3abdE6266807fBEB9e393DC9Bf04B143BE",DONATECILISTING_ABI);
-  
+
+
+  const getCreatorbyAccountAddress = async (accountAddress) => {
+    const userDocument = doc(firestore, `users`, accountAddress);
+    const user = await getDoc(userDocument);
+
+    if (!user.exists()) {
+      const userData = {
+        id: accountAddress,
+        is_creator: false,
+        name: "",
+        surname: "",
+        picture_url: "",
+        is_signatured: false,
+        social_links: [
+          {
+            id: "twitch",
+            link: "",
+          },
+        ],
+      };
+
+      await setDoc(userDocument, userData)
+        .then(() => {
+          return userData;
+        })
+        .catch((err) => {
+          return err;
+        });
+
+      return userData;
+    }
+
+    return user.data();
+  };
+
   const getCreatorCount = async () => {
     if(!contract)
       return;
 
     const count = await contract.getCreatorCount();
     
-    console.log(await contract.getCreatorAt(1)); // creator adres dönüyor
+    getCreators(count.toString(10)); 
     setCretorCount(count.toString(10));
+  }
+
+  const getCreators = async (count) => {
+    for(const i=1; count >= i; i++){
+      getCreatorbyAccountAddress(await contract.getCreatorAt(i)).then((data) => setCreatorListing(creatorListing => [...creatorListing,data]));
+    }
   }
 
   useEffect (() => {
     getCreatorCount()
   }, [contract])
+
+
+  useEffect (() => {
+    console.log(creatorListing);
+  }, [creatorListing])
 
   return (
     <Layout>
@@ -66,7 +116,7 @@ export default function Home() {
 
       <div className="mt-5 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
 
-        {listings.map((listing) => (
+        {creatorListing.map((listing) => (
           <ListingItem key={listing.id} listing={listing} />
         ))}
 
