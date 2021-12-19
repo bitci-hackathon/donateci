@@ -1,42 +1,72 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import Layout from "../../components/common/layout";
-import dynamic from "next/dynamic";
-import Router, { useRouter } from "next/router";
-import React from "react";
+import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { firestore } from "../../components/modules/firestore";
-import { Redirect } from "react-router-dom";
+import DONATECINFT_ABI from "../../contracts/DonateciNFT.json";
+import useContract from "../../hooks/useContract";
+import dynamic from "next/dynamic";
+import { useWeb3React } from "@web3-react/core";
+
 const ReactTwitchEmbedVideo = dynamic(
   () => import("react-twitch-embed-video"),
   {
     ssr: false,
   }
 );
+
 export default function Profile() {
   const router = useRouter();
   const { id } = router.query;
+  const [user, setUser] = useState(false);
+  const { active, account, library, connector, activate, deactivate } = useWeb3React();
+  const [nftCount, setNFTCount] = useState("0");
+  const [nftListing, setNFTListing] = useState([]);
+  const isConnected = typeof account === "string" && !!library;
+  //const contract = useContract("0x6143dC3abdE6266807fBEB9e393DC9Bf04B143BE", DONATECILISTING_ABI);
+  const nftContract = useContract("0xd4b352E4d61125a3580FD35D4bBbb5B0CE43D8D0", DONATECINFT_ABI);
 
-  const [user, setUser] = React.useState(null);
 
-
-  React.useEffect(async () => {
+  useEffect(() => {
     const { id } = router.query;
     if (!!router.query && !!id) {
-      const userDocument = doc(firestore, `users`, id);
-      let data = await getDoc(userDocument);
 
-      if (data.exists()) {
-        setUser(data.data());
-      } else {
-        setUser(null);
-        if (process.browser){
+      async function fetch() {
+        const userDocument = doc(firestore, `users`, id);
+        let data = await getDoc(userDocument);
+
+        if (data.exists()) {
+          setUser(data.data());
+        } else {
+          setUser(false);
+          if (process.browser) {
             router.push('/');
+          }
         }
       }
+
+      fetch();
     }
   }, [router.query]);
+
+  useEffect(() => {
+    if(!isConnected)
+      return;
+
+    console.log(nftContract);
+    const count = nftContract.balanceOf(id);
+
+    console.log('count: ',count);
+
+    for (const i = 0; i < count; i++) {
+        const nft =  nftContract.tokenOfOwnerByIndex(id, i);
+        console.log(nft);
+        const uri =  nftContract.tokenURI(nft);
+        console.log(uri);
+    }
+  }, [isConnected]);
 
   return (
     <Layout>
@@ -160,6 +190,11 @@ export default function Profile() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="flex">
+          <h2 className="bg-gray-800 w-full mt-2 rounded mx-2 px-2 py-4 text-white font-semibold"> NFTS</h2>
+
         </div>
       </div>
     </Layout>

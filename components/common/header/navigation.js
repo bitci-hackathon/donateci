@@ -15,7 +15,7 @@ import { firestore } from "../../modules/firestore";
 const navigations = [
   { name: "Dashboard", href: "/", current: true },
   { name: "Swap", href: "/swap", current: false },
-  { name: "Projects", href: "#", current: false },
+  { name: "NFT", href: "/nft", current: false },
   { name: "Calendar", href: "#", current: false },
   { name: "Reports", href: "#", current: false },
 ];
@@ -45,7 +45,7 @@ const Navigation = () => {
     if (!user.exists()) {
       const userData = {
         id: account,
-        is_creator: false,
+        is_creator: true,
         name: "",
         surname: "",
         picture_url: "",

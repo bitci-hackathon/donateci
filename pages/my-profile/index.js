@@ -8,7 +8,7 @@ import React from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../../components/modules/firestore";
 import { Dialog, FocusTrap } from "@headlessui/react";
-import clsx from "clsx";
+import classNames from "classnames";
 const ReactTwitchEmbedVideo = dynamic(
   () => import("react-twitch-embed-video"),
   {
@@ -83,10 +83,10 @@ export default function MyProfile() {
         open={isOpen}
         onClose={() => setIsOpen(false)}
         as="div"
-        className={clsx(
+        className={classNames(
           "fixed inset-0 z-10 flex items-center justify-center overflow-y-auto",
           {
-            "bg-gray-900/50": isOpen === true,
+            "bg-gray-900/50": isOpen,
           }
         )}
       >
