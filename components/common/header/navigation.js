@@ -13,7 +13,7 @@ import { firestore } from "../../modules/firestore";
 
 
 const navigations = [
-  { name: "Dashboard", href: "/", current: true },
+  { name: "Creators", href: "/", current: true },
   { name: "Swap", href: "/swap", current: false },
   { name: "NFT", href: "/nft", current: false },
   { name: "Mint NFT", href: "/create-nft", current: false },
