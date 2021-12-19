@@ -16,6 +16,8 @@ import NFTItem from '../../components/nft/item';
 import { Dialog, FocusTrap } from "@headlessui/react";
 import classNames from "classnames";
 import { ethers } from "ethers";
+import BlockUi from "react-block-ui";
+import 'react-block-ui/style.css';
 
 const ReactTwitchEmbedVideo = dynamic(
   () => import("react-twitch-embed-video"),
@@ -31,7 +33,8 @@ const Profile = () => {
   const [user, setUser] = useState(false);
   const [nftCount, setNFTCount] = useState("0");
   const [nftCollection, setNFTCollection] = useState([]);
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [donateSending,setDonateSending] = useState(false);
 
   const [donateForm, setDonateForm] = useState({
     amount: 0,
@@ -139,29 +142,58 @@ const Profile = () => {
   }
 
   const sendDonate = async () => {
-
-    console.log(donateForm);
-    if(donateForm.amount < 1)
+    if(donateForm.amount < 0.1){
+      window.toast.fire({
+        'title': '0.1 DNC üzeri bağışlarınız kabul edilir.',
+        'icon': 'warning'
+      });
       return;
+    }           
 
     const sendAmount = ethers.utils.parseEther(donateForm.amount.toString());
+    setDonateSending(true);
+    
+    try{
+      const approveTx = await donateciContract.approve(donateciDonate.address, sendAmount);
+      const approveTxWait = await approveTx.wait();
+      
+      console.log(approveTxWait);
 
-    const approveTx = await donateciContract.approve(donateciDonate.address, sendAmount);
-    const approveTxWait = await approveTx.wait();
+      const approveEvent = approveTxWait.events.find((log) => log.event == 'Approval');
+      if (typeof approveEvent === undefined){
+        setDonateSending(false);
+          window.toast.fire({
+            'title': 'Bağış için yeterli DNC bakiyeniz olmalı ve işleme izin vermelisiniz.',
+            'icon': 'danger'
+          });
+      }
 
-    console.log(approveTxWait);
+      const donate = await donateciDonate.donate(user.id,sendAmount,donateForm?.message);
+      const receipt = await donate.wait();
 
-    const donate = await donateciDonate.donate(user.id,sendAmount,donateForm.message);
-    const receipt = await donate.wait();
+      console.log(receipt);
 
-    console.log(receipt);
+      const donateEvent = receipt.events.find((log) => log.event == 'Donation');
 
-    const donateEvent = receipt.events.find((log) => log.event == 'Donation');
+      if (typeof donateEvent !== undefined){
+        // donate yaptık
+        window.toast.fire({
+          'title': 'Bağışınız ve mesajınız başarılı bir şekilde iletildi.',
+          'icon': 'success'
+        });
+      }
+      setDonateSending(false);
 
-    if (typeof donateEvent !== undefined){
-      // Todo  donate yaptık
-      alert("Bağışınız ve mesajınzı başarılı bir şekilde iletildi.");
+    }catch(e){
+      setDonateSending(false);
+      window.toast.fire({
+        'title': 'Bağış için yeterli DNC bakiyeniz olmalı ve işleme izin vermelisiniz.',
+        'icon': 'danger'
+      });
+      return;
     }
+
+    
     
   }
 
@@ -425,56 +457,58 @@ const Profile = () => {
                     )}
 
                     { account != id && (
-                      <form className="space-y-6 p-5" action="#">
-                        <div>
-                          <label
-                            htmlFor="amount"
-                            className="text-sm font-medium block mb-2 dark:text-gray-100"
-                          >
-                            Donate Amount
-                          </label>
-                          <input
-                            type="number"
-                            name="amount"
-                            id="amount"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
-                            placeholder="0.0"
-                            required=""
-                            onChange={(e) => setDonateForm({...donateForm, amount: e.target.value })}
-                            value={donateForm.amount}
-                          />
-                        </div>
+                      <BlockUi tag="div" blocking={donateSending}>
+                        <form className="space-y-6 p-5" action="#">
+                          <div>
+                            <label
+                              htmlFor="amount"
+                              className="text-sm font-medium block mb-2 dark:text-gray-100"
+                            >
+                              Donate Amount
+                            </label>
+                            <input
+                              type="number"
+                              name="amount"
+                              id="amount"
+                              className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
+                              placeholder="0.0"
+                              required=""
+                              onChange={(e) => setDonateForm({...donateForm, amount: e.target.value })}
+                              value={donateForm.amount}
+                            />
+                          </div>
 
-                        <div>
-                          <label
-                            htmlFor="message"
-                            className="text-sm font-medium block mb-2 dark:text-gray-100"
-                          >
-                            Message
-                          </label>
-                          <textarea
-                            type="text"
-                            name="message"
-                            id="message"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
-                            placeholder="your message"
-                            required=""
-                            onChange={(e) => setDonateForm({...donateForm, message: e.target.value })}
-                            value={donateForm.message}
-                          ></textarea>
-                        </div>
+                          <div>
+                            <label
+                              htmlFor="message"
+                              className="text-sm font-medium block mb-2 dark:text-gray-100"
+                            >
+                              Message
+                            </label>
+                            <textarea
+                              type="text"
+                              name="message"
+                              id="message"
+                              className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
+                              placeholder="your message"
+                              required=""
+                              onChange={(e) => setDonateForm({...donateForm, message: e.target.value })}
+                              value={donateForm.message}
+                            ></textarea>
+                          </div>
 
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            sendDonate()
-                          }}
-                          type='button'
-                          className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                        >
-                          Send Donate
-                        </button>
-                      </form>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              sendDonate()
+                            }}
+                            type='button'
+                            className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                          >
+                            Send Donate
+                          </button>
+                        </form>
+                      </BlockUi> 
                     )}
 
                   </div>
