@@ -16,7 +16,7 @@ export default function Home() {
   const [creatorListing, setCreatorListing] = useState([]);
   const isConnected = typeof account === "string" && !!library;
 
-  const contract = useContract("0x6143dC3abdE6266807fBEB9e393DC9Bf04B143BE", DONATECILISTING_ABI);
+  const contract = useContract("0x2cB48651189E4dB3E74B61711FEDe58A574cEe38", DONATECILISTING_ABI);
 
 
   const getCreatorbyAccountAddress = async (accountAddress) => {

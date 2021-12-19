@@ -19,7 +19,7 @@ const NFT = ({nft}) => {
 
     const isConnected = typeof account === "string" && !!library;
       
-    const listingContract = useContract("0x6143dC3abdE6266807fBEB9e393DC9Bf04B143BE", DONATECILISTING_ABI);
+    const listingContract = useContract("0x2cB48651189E4dB3E74B61711FEDe58A574cEe38", DONATECILISTING_ABI);
     const donateciContract = useContract("0x6559948CB18FFcb26B1aA2352353437C118923dD", DONATECI_ABI);
 
     const buy = async () => {

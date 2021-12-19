@@ -18,7 +18,7 @@ export default function NFT() {
   const isConnected = typeof account === "string" && !!library;
 
   
-  const contract = useContract("0x6143dC3abdE6266807fBEB9e393DC9Bf04B143BE", DONATECILISTING_ABI);
+  const contract = useContract("0x2cB48651189E4dB3E74B61711FEDe58A574cEe38", DONATECILISTING_ABI);
   const nftContract = useContract("0xd4b352E4d61125a3580FD35D4bBbb5B0CE43D8D0", DONATECINFT_ABI);
 
   const getOwnerAccountbyAddress = async (address) => {
