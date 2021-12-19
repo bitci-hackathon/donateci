@@ -20,9 +20,7 @@ const navigations = [
   { name: "Reports", href: "#", current: false },
 ];
 const userNavigation = [
-  { name: "Your Profile", href: "profile" },
-  { name: "Settings", href: "#" },
-  { name: "Sign out", href: "#" },
+  { name: "Your Profile", href: "my-profile" }
 ];
 
 function classNames(...classes) {
@@ -52,12 +50,7 @@ const Navigation = () => {
         surname: "",
         picture_url: "",
         is_signatured: false,
-        social_links: [
-          {
-            id: "twitch",
-            link: "",
-          },
-        ],
+        twitch_address: ""
       };
 
       await setDoc(userDocument, userData)
@@ -151,8 +144,7 @@ const Navigation = () => {
                               <Menu.Item key={item.name}>
                                 {({ active }) => (
                                   <a
-                                    /*href={item.href}*/
-                                    onClick={() => deactivate()}
+                                    href={item.href}
                                     className={classNames(
                                       active ? "bg-gray-100" : "",
                                       "block px-4 py-2 text-sm text-gray-700"
