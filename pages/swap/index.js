@@ -29,7 +29,7 @@ export default function Swap() {
         },
         {
           id: 3,
-          name: 'DNT',
+          name: 'DNC',
           address : '0xfff',
           icon:
             'https://www.bitci.com/assets/img/home/coin/ETH.png',
@@ -44,7 +44,7 @@ export default function Swap() {
                    
                     <div className="">
                         <div className="w-full space-y-6">
-                            <TokenSelect tokens={tokens}></TokenSelect>
+                            <TokenSelect tokens={tokens} selectedIndex={0}></TokenSelect>
 
                             <div className="w-full">
                                 <div className=" relative ">
@@ -61,7 +61,7 @@ export default function Swap() {
                                 </button>
                             </div>
 
-                            <TokenSelect tokens={tokens}></TokenSelect>
+                            <TokenSelect tokens={tokens} selectedIndex={2}></TokenSelect>
                             
                             <div className="w-full">
                                 <div className=" relative ">
