@@ -7,11 +7,15 @@ import React, { useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../../components/modules/firestore";
 import DONATECINFT_ABI from "../../contracts/DonateciNFT.json";
+import DONATECILISTING_ABI from "../../contracts/DonateciListing.json";
+import DONATECI_ABI from "../../contracts/Donateci.json";
+import DONATECIDONATE_ABI from "../../contracts/DonateciDonate.json";
 import useContract from "../../hooks/useContract";
 import dynamic from "next/dynamic";
 import NFTItem from '../../components/nft/item';
 import { Dialog, FocusTrap } from "@headlessui/react";
 import classNames from "classnames";
+import { ethers } from "ethers";
 
 const ReactTwitchEmbedVideo = dynamic(
   () => import("react-twitch-embed-video"),
@@ -29,9 +33,17 @@ const Profile = () => {
   const [nftCollection, setNFTCollection] = useState([]);
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const nftContract = useContract("0xd4b352E4d61125a3580FD35D4bBbb5B0CE43D8D0", DONATECINFT_ABI);
+  const [donateForm, setDonateForm] = useState({
+    amount: 0,
+    message: ''
+  });
 
-  const [userForm, setUserForm] = React.useState({
+  const nftContract = useContract("0xd4b352E4d61125a3580FD35D4bBbb5B0CE43D8D0", DONATECINFT_ABI);
+  const donateciContract = useContract("0x6559948CB18FFcb26B1aA2352353437C118923dD", DONATECI_ABI);
+  const donateciDonate = useContract("0xfa244A43d145f02a1223F501af6111c1DefFBa1f", DONATECIDONATE_ABI);
+  const donateciListingContract = useContract("0x2cB48651189E4dB3E74B61711FEDe58A574cEe38", DONATECILISTING_ABI);
+
+  const [userForm, setUserForm] = useState({
     id: "",
     is_creator: false,
     name: "",
@@ -47,6 +59,7 @@ const Profile = () => {
         const userDocument = doc(firestore, `users`, id);
         let data = await getDoc(userDocument);
         setUser(data.data());
+        
       }
       fetchUser();
     }
@@ -77,6 +90,22 @@ const Profile = () => {
     }
   }
 
+  const updateCreatorStatus = async () => {
+    const userDocument = doc(firestore, `users`, account);
+
+    const user = await getDoc(userDocument);
+
+    if (user.exists()) {
+      const newUserData = {...user.data(), is_creator: true};
+      await setDoc(userDocument, newUserData)
+        .then(() => {
+          setUser(newUserData);
+        })
+        .catch((err) => {
+        });
+    }
+  }
+
   const handleInputChange = (event) => {
     const target = event.target;
     const value = target.type === "checkbox" ? target.checked : target.value;
@@ -89,6 +118,52 @@ const Profile = () => {
     });
   };
 
+  const becomeCreator = async () => {
+
+    const approveTx = await donateciContract.approve(donateciListingContract.address, ethers.utils.parseEther("100"));
+    const approveTxWait = await approveTx.wait();
+    
+    console.log(approveTxWait);
+
+    const becomeCreatorCall = await donateciListingContract.becomeCreator();
+    const receipt = await becomeCreatorCall.wait();
+
+    console.log(receipt);
+
+    const creatorEvent = receipt.events.find((log) => log.event == 'NewCreator');
+
+    if (typeof creatorEvent !== undefined){
+        updateCreatorStatus();
+    }
+
+  }
+
+  const sendDonate = async () => {
+
+    console.log(donateForm);
+    if(donateForm.amount < 1)
+      return;
+
+    const sendAmount = ethers.utils.parseEther(donateForm.amount.toString());
+
+    const approveTx = await donateciContract.approve(donateciDonate.address, sendAmount);
+    const approveTxWait = await approveTx.wait();
+
+    console.log(approveTxWait);
+
+    const donate = await donateciDonate.donate(user.id,sendAmount,donateForm.message);
+    const receipt = await donate.wait();
+
+    console.log(receipt);
+
+    const donateEvent = receipt.events.find((log) => log.event == 'Donation');
+
+    if (typeof donateEvent !== undefined){
+      // Todo  donate yaptık
+      alert("Bağışınız ve mesajınzı başarılı bir şekilde iletildi.");
+    }
+    
+  }
 
   useEffect(() => {
     const { id } = router.query;
@@ -330,9 +405,9 @@ const Profile = () => {
                      
                       <div className=" w-full p-3">
                         { 
-                          !user.is_creator && (
+                          !user?.is_creator && (
                           <button
-                              onClick={() => setIsOpen(true)}
+                              onClick={() => becomeCreator()}
                               className="mb-2 space-y-6 w-full text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
                             >
                             Become Creator
@@ -350,24 +425,7 @@ const Profile = () => {
                     )}
 
                     { account != id && (
-                      <form className="space-y-6" action="#">
-                        <div>
-                          <label
-                            htmlFor="name"
-                            className="text-sm font-medium block mb-2 dark:text-gray-100"
-                          >
-                            Your Name
-                          </label>
-                          <input
-                            type="text"
-                            name="name"
-                            id="name"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
-                            placeholder="Your name"
-                            required=""
-                          />
-                        </div>
-
+                      <form className="space-y-6 p-5" action="#">
                         <div>
                           <label
                             htmlFor="amount"
@@ -376,12 +434,14 @@ const Profile = () => {
                             Donate Amount
                           </label>
                           <input
-                            type="text"
+                            type="number"
                             name="amount"
                             id="amount"
                             className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
                             placeholder="0.0"
                             required=""
+                            onChange={(e) => setDonateForm({...donateForm, amount: e.target.value })}
+                            value={donateForm.amount}
                           />
                         </div>
 
@@ -399,14 +459,20 @@ const Profile = () => {
                             className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
                             placeholder="your message"
                             required=""
+                            onChange={(e) => setDonateForm({...donateForm, message: e.target.value })}
+                            value={donateForm.message}
                           ></textarea>
                         </div>
 
                         <button
-                          type="submit"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            sendDonate()
+                          }}
+                          type='button'
                           className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                         >
-                          Connect Wallet
+                          Send Donate
                         </button>
                       </form>
                     )}

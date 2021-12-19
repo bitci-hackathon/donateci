@@ -44,7 +44,7 @@ const Navigation = () => {
     if (!user.exists()) {
       const userData = {
         id: account,
-        is_creator: true,
+        is_creator: false,
         name: "",
         surname: "",
         picture_url: "",
