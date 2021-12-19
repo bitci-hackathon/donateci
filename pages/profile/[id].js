@@ -484,7 +484,7 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="grid">
+        <div className="grid mt-12">
           <h2 className="bg-gray-800 w-full rounded mt-5 px-2 py-4 text-white font-semibold"> NFTS</h2>
           <div className="mt-5 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
            
