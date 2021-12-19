@@ -76,7 +76,7 @@ export default function NFT() {
       const nftListing = await contract.getNFTListingAt(i);
 
       console.log(nftListing);
-      
+
       if(nftListing.creator == '0x0000000000000000000000000000000000000000'){
         continue;
         // TODO firebase'den sil

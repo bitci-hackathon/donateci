@@ -23,9 +23,12 @@ const NFT = ({nft}) => {
     const donateciContract = useContract("0x6559948CB18FFcb26B1aA2352353437C118923dD", DONATECI_ABI);
 
     const buy = async () => {
+        console.log(nft);
         const approveTx = await donateciContract.approve(listingContract.address, ethers.BigNumber.from(nft.priceInWei));
-        await approveTx.wait();
+        const approveTxWait = await approveTx.wait();
         
+        console.log(approveTxWait);
+
         const buyTx = await listingContract.buyNFT(nft.id);
         const receipt = await buyTx.wait();
 

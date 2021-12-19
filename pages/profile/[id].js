@@ -4,7 +4,7 @@ import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import Layout from "../../components/common/layout";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../../components/modules/firestore";
 import DONATECINFT_ABI from "../../contracts/DonateciNFT.json";
 import useContract from "../../hooks/useContract";
@@ -29,7 +29,6 @@ const Profile = () => {
   const [nftCollection, setNFTCollection] = useState([]);
   const [isOpen, setIsOpen] = React.useState(false);
 
-  //const contract = useContract("0x6143dC3abdE6266807fBEB9e393DC9Bf04B143BE", DONATECILISTING_ABI);
   const nftContract = useContract("0xd4b352E4d61125a3580FD35D4bBbb5B0CE43D8D0", DONATECINFT_ABI);
 
   const [userForm, setUserForm] = React.useState({
@@ -45,7 +44,7 @@ const Profile = () => {
   React.useEffect(() => {
     if (account) {
       async function fetchUser(){
-        const userDocument = doc(firestore, `users`, account);
+        const userDocument = doc(firestore, `users`, id);
         let data = await getDoc(userDocument);
         setUser(data.data());
       }
@@ -123,7 +122,10 @@ const Profile = () => {
         console.log(count);
 
         setNFTCount(count);
-     
+        
+        if(count < nftCollection.length)
+          return;
+
         for (const i = 0; i < count; i++) {
             const nft =  await nftContract.tokenOfOwnerByIndex(id, i);
             const uri =  await nftContract.tokenURI(nft);
@@ -323,9 +325,21 @@ const Profile = () => {
                       {user?.surname}
                     </h2>
                   </div>
-                  <div className=" w-full  p-5">
+                  <div className="w-full">
                     { account == id && (
-                      <div className=" w-full  p-5">
+                     
+                      <div className=" w-full p-3">
+                        { 
+                          !user.is_creator && (
+                          <button
+                              onClick={() => setIsOpen(true)}
+                              className="mb-2 space-y-6 w-full text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+                            >
+                            Become Creator
+                          </button>
+                        )}
+                        
+
                         <button
                               onClick={() => setIsOpen(true)}
                               className=" space-y-6 w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
@@ -405,7 +419,7 @@ const Profile = () => {
         </div>
 
         <div className="grid">
-          <h2 className="bg-gray-800 w-full rounded mt-2 px-2 py-4 text-white font-semibold"> NFTS</h2>
+          <h2 className="bg-gray-800 w-full rounded mt-5 px-2 py-4 text-white font-semibold"> NFTS</h2>
           <div className="mt-5 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
            
               {nftCollection.map((listing) => (
