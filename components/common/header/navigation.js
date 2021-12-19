@@ -15,7 +15,8 @@ import { firestore } from "../../modules/firestore";
 const navigations = [
   { name: "Dashboard", href: "/", current: true },
   { name: "Swap", href: "/swap", current: false },
-  { name: "NFT", href: "/nft", current: false }
+  { name: "NFT", href: "/nft", current: false },
+  { name: "Create NFT", href: "/create-nft", current: false },
 ];
 
 const userNavigation = [
