@@ -1,10 +1,16 @@
 import { ArrowCircleDownIcon, ArrowCircleUpIcon } from "@heroicons/react/outline";
+import { useWeb3React } from "@web3-react/core";
 import { useState } from "react";
+import Account from "../../components/Account";
 import Layout from "../../components/common/layout";
 import TokenSelect from "../../components/swap/token-select";
+import useEagerConnect from "../../hooks/useEagerConnect";
 
 export default function Swap() {
     const [rotate,setRotate] = useState(true);
+    const { active, account, library, connector, activate, deactivate } =    useWeb3React();
+    const isConnected = typeof account === "string" && !!library;
+    const triedEagerConnect = useEagerConnect();
 
     const tokens = [
         {
@@ -64,12 +70,17 @@ export default function Swap() {
                                     placeholder="0.0" />
                                 </div>
                             </div>
-                           
+
                             <div>
                                 <span className="block w-full rounded-md shadow-sm">
-                                    <button type="button" className="py-2 px-4  bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-indigo-200 text-white w-full transition ease-in duration-200 text-center text-base font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2  rounded-lg ">
-                                        Connect Wallet
-                                    </button>
+                                    {isConnected ? (
+                                        <button type="button" className="py-2 px-4  bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-indigo-200 text-white w-full transition ease-in duration-200 text-center text-base font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2  rounded-lg ">
+                                            Convert
+                                        </button>
+                                    ): (
+                                        <Account triedToEagerConnect={triedEagerConnect} />
+                                    )}
+                                    
                                 </span>
                             </div>
                         </div>
