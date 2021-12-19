@@ -17,7 +17,7 @@ export default function Swap() {
 
             <div className="bg-white rounded-lg shadow sm:max-w-md sm:w-full sm:mx-auto sm:overflow-hidden">
                 <div className="px-4 py-8 sm:px-10">
-                    <h1 className="h1 text-center text-2xl mb-10 shadow-md font-bold">Create Mint</h1>
+                    <h1 className="h1 text-center text-2xl mb-10 shadow-md font-bold">Mint NFT</h1>
                    
                     <div className="">
                         <div className="w-full space-y-6">
