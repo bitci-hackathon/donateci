@@ -1,7 +1,12 @@
 import Layout from "../../components/common/layout";
-import { doc, setDoc, getDoc, addDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { firestore } from "../../components/modules/firestore";
-import { formatEther } from 'ethers/lib/utils';
+
+import DONATECILISTING_ABI from "../../contracts/DonateciListing.json";
+import DONATECI_ABI from "../../contracts/Donateci.json";
+import { ethers } from "ethers";
+import { useWeb3React } from "@web3-react/core";
+import useContract from "../../hooks/useContract";
 
 const NFT = ({nft}) => {
 
@@ -10,7 +15,30 @@ const NFT = ({nft}) => {
     const end = str.substring(str.length-8,str.length);
     const id = begin +"......" + end;
 
+    const { active, account, library, connector, activate, deactivate } = useWeb3React();
 
+    const isConnected = typeof account === "string" && !!library;
+      
+    const listingContract = useContract("0x6143dC3abdE6266807fBEB9e393DC9Bf04B143BE", DONATECILISTING_ABI);
+    const donateciContract = useContract("0x6559948CB18FFcb26B1aA2352353437C118923dD", DONATECI_ABI);
+
+    const buy = async () => {
+        const approveTx = await donateciContract.approve(listingContract.address, ethers.BigNumber.from(nft.priceInWei));
+        await approveTx.wait();
+        
+        const buyTx = await listingContract.buyNFT(nft.id);
+        const receipt = await buyTx.wait();
+
+        console.log(buyTx);
+        console.log(receipt);
+
+        const nftSoldEvent = receipt.events.find((log) => log.event == 'NFTSold');
+
+        if (typeof nftSoldEvent !== undefined){
+            // TODO firebase'den sil
+        
+        }
+    }
     return (
         <Layout>
       
@@ -33,7 +61,7 @@ const NFT = ({nft}) => {
                                 <span className="font-bold text-5xl leading-none align-baseline">{nft.price}</span>
                             </div>
                             <div className="inline-block align-bottom">
-                                <button className="bg-purple-900 opacity-75 hover:opacity-100 text-white rounded-full px-10 py-2 font-semibold"><i className="mdi mdi-cart -ml-2 mr-2"></i> BUY NOW</button>
+                                <button onClick={() => buy()} className="bg-purple-900 opacity-75 hover:opacity-100 text-white rounded-full px-10 py-2 font-semibold"><i className="mdi mdi-cart -ml-2 mr-2"></i> BUY NOW</button>
                             </div>
                         </div>
                     </div>

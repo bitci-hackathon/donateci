@@ -1,8 +1,7 @@
-import { BellIcon, SearchIcon } from '@heroicons/react/outline'
+import { SearchIcon } from '@heroicons/react/outline'
 import { useWeb3React } from '@web3-react/core';
 import { useEffect, useState } from 'react';
 import Layout from '../../components/common/layout'
-import ListingItem from '../../components/listing/item'
 import DONATECILISTING_ABI from "../../contracts/DonateciListing.json";
 import DONATECINFT_ABI from "../../contracts/DonateciNFT.json";
 import useContract from '../../hooks/useContract';
@@ -66,7 +65,6 @@ export default function NFT() {
     if (!contract)
       return;
 
-      console.log(contract);
     const count = await contract.getNFTListingCount();
 
     getNFTListing(count.toString(10));
@@ -77,8 +75,22 @@ export default function NFT() {
     for (const i = 1; count >= i; i++) {
       const nftListing = await contract.getNFTListingAt(i);
 
+      console.log(nftListing);
+      
+      if(nftListing.creator == '0x0000000000000000000000000000000000000000'){
+        continue;
+        // TODO firebase'den sil
+      }
+        
       const nftImage = await nftContract.tokenURI(nftListing[1].toString(10));
-      getNftbyAddress(nftListing[1].toString(10),nftListing.creator,nftImage,nftListing.priceInWeiDNC,nftListing.tokenId.toString(10)).then(async(data) => {
+
+      getNftbyAddress(
+        nftListing[1].toString(10), 
+        nftListing.creator, 
+        nftImage,
+        nftListing.priceInWeiDNC, 
+        nftListing.tokenId.toString(10)
+      ).then(async(data) => {
         setNFTListing(nftListing => [...nftListing, data])
       });
     }

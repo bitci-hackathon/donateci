@@ -15,12 +15,11 @@ import { firestore } from "../../modules/firestore";
 const navigations = [
   { name: "Dashboard", href: "/", current: true },
   { name: "Swap", href: "/swap", current: false },
-  { name: "NFT", href: "/nft", current: false },
-  { name: "Calendar", href: "#", current: false },
-  { name: "Reports", href: "#", current: false },
+  { name: "NFT", href: "/nft", current: false }
 ];
+
 const userNavigation = [
-  { name: "Your Profile", href: "my-profile" }
+  { name: "Your Profile", href: "/my-profile" }
 ];
 
 function classNames(...classes) {
@@ -28,8 +27,8 @@ function classNames(...classes) {
 }
 
 const Navigation = () => {
-  const { active, account, library, connector, activate, deactivate } =    useWeb3React();
   const triedEagerConnect = useEagerConnect();
+  const { active, account, library, connector, activate, deactivate } =    useWeb3React();
   const router = useRouter();
 
   const isConnected = typeof account === "string" && !!library;
@@ -89,7 +88,7 @@ const Navigation = () => {
                     {navigations.map((item) => (
                       <a
                         key={item.name}
-                        href={item.href}
+                        href={item.href === '/my-profile'? '/profile/'+ account : item.href }
                         className={classNames(
                           router.pathname == item.href
                             ? "bg-gray-900 text-white"
@@ -144,7 +143,7 @@ const Navigation = () => {
                               <Menu.Item key={item.name}>
                                 {({ active }) => (
                                   <a
-                                    href={item.href}
+                                    href={item.href === '/my-profile'? '/profile/'+ account : item.href }
                                     className={classNames(
                                       active ? "bg-gray-100" : "",
                                       "block px-4 py-2 text-sm text-gray-700"

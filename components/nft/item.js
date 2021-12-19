@@ -1,7 +1,7 @@
 
 const NFTItem = ({ listing }) => {
 
-    const str = listing.owner.toString();
+    const str = listing.owner.id.toString();
     const begin = str.substring(0,8);
     const end = str.substring(str.length-8,str.length);
     const id = begin +"......" + end;
@@ -18,17 +18,21 @@ const NFTItem = ({ listing }) => {
             <div className="flex w-full justify-center relative ">
                 <h1 className="text-center w-10/12 -mt-14 flex  items-center justify-center text-white text-xs overflow-ellipsis hover:font-bold z-50 hover:cursor-pointer">{listing.owner.name ?? id}</h1>
             </div>
-            <div className="mt-1 flex justify-between">
-                <div className="bg-gray-800 w-full p-2 rounded text-center  font-medium">
-                    <h3 className="text-sm text-white">
-                        <a href={'nft/'+listing.id}>
-                            <span aria-hidden="true" className="absolute inset-0" />
-                            Buy Now {listing.price} DNC
-                        </a>
-                    </h3>
 
+            {listing.price && (
+                <div className="mt-1 flex justify-between">
+                    <div className="bg-gray-800 w-full p-2 rounded text-center  font-medium">
+                        <h3 className="text-sm text-white">
+                            <a href={'nft/'+listing.id}>
+                                <span aria-hidden="true" className="absolute inset-0" />
+                                Buy Now {listing.price} DNC
+                            </a>
+                        </h3>
+
+                    </div>
                 </div>
-            </div>
+            )}
+            
         </div>
     )
 }

@@ -1,3 +1,4 @@
+import { useWeb3React } from "@web3-react/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import Layout from "../../components/common/layout";
@@ -8,7 +9,9 @@ import { firestore } from "../../components/modules/firestore";
 import DONATECINFT_ABI from "../../contracts/DonateciNFT.json";
 import useContract from "../../hooks/useContract";
 import dynamic from "next/dynamic";
-import { useWeb3React } from "@web3-react/core";
+import NFTItem from '../../components/nft/item';
+import { Dialog, FocusTrap } from "@headlessui/react";
+import classNames from "classnames";
 
 const ReactTwitchEmbedVideo = dynamic(
   () => import("react-twitch-embed-video"),
@@ -17,16 +20,75 @@ const ReactTwitchEmbedVideo = dynamic(
   }
 );
 
-export default function Profile() {
+const Profile = () => {
+  const { account } = useWeb3React();
   const router = useRouter();
   const { id } = router.query;
   const [user, setUser] = useState(false);
-  const { active, account, library, connector, activate, deactivate } = useWeb3React();
   const [nftCount, setNFTCount] = useState("0");
-  const [nftListing, setNFTListing] = useState([]);
-  const isConnected = typeof account === "string" && !!library;
+  const [nftCollection, setNFTCollection] = useState([]);
+  const [isOpen, setIsOpen] = React.useState(false);
+
   //const contract = useContract("0x6143dC3abdE6266807fBEB9e393DC9Bf04B143BE", DONATECILISTING_ABI);
   const nftContract = useContract("0xd4b352E4d61125a3580FD35D4bBbb5B0CE43D8D0", DONATECINFT_ABI);
+
+  const [userForm, setUserForm] = React.useState({
+    id: "",
+    is_creator: false,
+    name: "",
+    surname: "",
+    picture_url: "",
+    is_signatured: false,
+    twitch_address: "",
+  });
+
+  React.useEffect(() => {
+    if (account) {
+      async function fetchUser(){
+        const userDocument = doc(firestore, `users`, account);
+        let data = await getDoc(userDocument);
+        setUser(data.data());
+      }
+      fetchUser();
+    }
+  }, [account]);
+
+
+  React.useEffect(() => {
+    //if(isOpen)
+    //{
+    setUserForm(user);
+    //}
+  }, [isOpen]);
+
+  async function handleSave() {
+    const userDocument = doc(firestore, `users`, account);
+
+    const user = await getDoc(userDocument);
+
+    if (user.exists()) {
+      await setDoc(userDocument, userForm)
+        .then(() => {
+          setUser(userForm);
+          setIsOpen(false);
+        })
+        .catch((err) => {
+          setIsOpen(false);
+        });
+    }
+  }
+
+  const handleInputChange = (event) => {
+    const target = event.target;
+    const value = target.type === "checkbox" ? target.checked : target.value;
+    const name = target.name;
+
+    var partialState = {};
+    partialState[name] = value;
+    setUserForm((prevState) => {
+      return { ...prevState, ...partialState };
+    });
+  };
 
 
   useEffect(() => {
@@ -52,24 +114,160 @@ export default function Profile() {
   }, [router.query]);
 
   useEffect(() => {
-    if(!isConnected)
+    if(!nftContract)
       return;
 
-    console.log(nftContract);
-    const count = nftContract.balanceOf(id);
+      async function test(){
+        const count = await nftContract.balanceOf(id);
 
-    console.log('count: ',count);
+        console.log(count);
 
-    for (const i = 0; i < count; i++) {
-        const nft =  nftContract.tokenOfOwnerByIndex(id, i);
-        console.log(nft);
-        const uri =  nftContract.tokenURI(nft);
-        console.log(uri);
-    }
-  }, [isConnected]);
+        setNFTCount(count);
+     
+        for (const i = 0; i < count; i++) {
+            const nft =  await nftContract.tokenOfOwnerByIndex(id, i);
+            const uri =  await nftContract.tokenURI(nft);
+            console.log(nft);
+            setNFTCollection(nftCollection => [...nftCollection, {
+              image_url: uri,
+              id: nft,
+              owner: user,
+              price: false
+            }]);
+        }
+      };
+      
+      test();
+
+  }, [nftContract]);
 
   return (
     <Layout>
+
+      {id === account && (
+        <Dialog
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        as="div"
+        className={classNames(
+          "fixed inset-0 z-10 flex items-center justify-center overflow-y-auto",
+          {
+            "bg-gray-900/50": isOpen,
+          }
+        )}
+      >
+        <div className="flex flex-col bg-gray-800 text-white w-5/12 py-8 px-4 text-center">
+          <Dialog.Overlay />
+
+          <Dialog.Title className="text-blue-500 text-3xl">
+            Edit Profile
+          </Dialog.Title>
+          <Dialog.Description className="text-xl m-2">
+            Update your profile.
+          </Dialog.Description>
+          {userForm ? (
+            <FocusTrap>
+              <div className="px-4 py-5 sm:p-6">
+                <div className=" mt-4">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-white-700"
+                  >
+                    Name
+                  </label>
+                  <div className="flex rounded-md shadow-sm">
+                    <input
+                      id="name"
+                      type="text"
+                      name="name"
+                      value={userForm.name}
+                      onChange={(e) => handleInputChange(e)}
+                      className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 p-2 block w-full rounded-l-md rounded-r-md sm:text-sm  text-black border-gray-300"
+                      placeholder="test"
+                    />
+                  </div>
+                </div>
+                <div className=" mt-4">
+                  <label
+                    htmlFor="twitch_address"
+                    className="block text-sm font-medium text-white-700"
+                  >
+                    Twitch Channel Address
+                  </label>
+                  <div className="flex rounded-md shadow-sm">
+                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 p-2 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                      http://twitch.com/
+                    </span>
+                    <input
+                      id="twitch_address"
+                      type="text"
+                      name="twitch_address"
+                      value={userForm?.twitch_address}
+                      onChange={handleInputChange}
+                      className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full p-2 rounded-none rounded-r-md sm:text-sm  text-black border-gray-300"
+                      placeholder="test"
+                    />
+                  </div>
+                </div>
+                <div className=" mt-4">
+                  <label
+                    htmlFor="picture_url"
+                    className="block text-sm font-medium text-white-700"
+                  >
+                    Cover Image Url
+                  </label>
+                  <div className="flex rounded-md shadow-sm">
+                    <input
+                      id="picture_url"
+                      type="text"
+                      name="picture_url"
+                      value={userForm?.picture_url}
+                      onChange={handleInputChange}
+                      className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full p-2 rounded-md sm:text-sm  text-black border-gray-300"
+                      placeholder="http://"
+                    />
+                  </div>
+                </div>
+                <div className=" mt-4">
+                  <label
+                    htmlFor="surname"
+                    className="block text-sm font-medium text-white-700"
+                  >
+                    About
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      id="surname"
+                      name="surname"
+                      value={userForm?.surname}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-black p-2 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                      placeholder="About"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                className="w-full m-4 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={() => handleSave()}
+              >
+                Save
+              </button>
+              <button
+                className="m-4 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={() => setIsOpen(false)}
+              >
+                Cancel
+              </button>
+            </FocusTrap>
+          ) : (
+            ""
+          )}
+        </div>
+      </Dialog>
+      )}
       <div className="container mx-auto p-5">
         <div className="md:flex no-wrap">
           <div className="w-full md:w-8/12 h-64">
@@ -126,65 +324,79 @@ export default function Profile() {
                     </h2>
                   </div>
                   <div className=" w-full  p-5">
-                    <form className="space-y-6" action="#">
-                      <div>
-                        <label
-                          htmlFor="name"
-                          className="text-sm font-medium block mb-2 dark:text-gray-100"
-                        >
-                          Your Name
-                        </label>
-                        <input
-                          type="text"
-                          name="name"
-                          id="name"
-                          className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
-                          placeholder="Your name"
-                          required=""
-                        />
+                    { account == id && (
+                      <div className=" w-full  p-5">
+                        <button
+                              onClick={() => setIsOpen(true)}
+                              className=" space-y-6 w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                            >
+                            Edit Profile
+                          </button>
                       </div>
+                    )}
 
-                      <div>
-                        <label
-                          htmlFor="amount"
-                          className="text-sm font-medium block mb-2 dark:text-gray-100"
+                    { account != id && (
+                      <form className="space-y-6" action="#">
+                        <div>
+                          <label
+                            htmlFor="name"
+                            className="text-sm font-medium block mb-2 dark:text-gray-100"
+                          >
+                            Your Name
+                          </label>
+                          <input
+                            type="text"
+                            name="name"
+                            id="name"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
+                            placeholder="Your name"
+                            required=""
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="amount"
+                            className="text-sm font-medium block mb-2 dark:text-gray-100"
+                          >
+                            Donate Amount
+                          </label>
+                          <input
+                            type="text"
+                            name="amount"
+                            id="amount"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
+                            placeholder="0.0"
+                            required=""
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="message"
+                            className="text-sm font-medium block mb-2 dark:text-gray-100"
+                          >
+                            Message
+                          </label>
+                          <textarea
+                            type="text"
+                            name="message"
+                            id="message"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
+                            placeholder="your message"
+                            required=""
+                          ></textarea>
+                        </div>
+
+                        <button
+                          type="submit"
+                          className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                         >
-                          Donate Amount
-                        </label>
-                        <input
-                          type="text"
-                          name="amount"
-                          id="amount"
-                          className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
-                          placeholder="0.0"
-                          required=""
-                        />
-                      </div>
+                          Connect Wallet
+                        </button>
+                      </form>
+                    )}
 
-                      <div>
-                        <label
-                          htmlFor="message"
-                          className="text-sm font-medium block mb-2 dark:text-gray-100"
-                        >
-                          Message
-                        </label>
-                        <textarea
-                          type="text"
-                          name="message"
-                          id="message"
-                          className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-100 dark:text-white"
-                          placeholder="your message"
-                          required=""
-                        ></textarea>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                      >
-                        Connect Wallet
-                      </button>
-                    </form>
                   </div>
                 </div>
               </div>
@@ -192,11 +404,21 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="flex">
-          <h2 className="bg-gray-800 w-full mt-2 rounded mx-2 px-2 py-4 text-white font-semibold"> NFTS</h2>
-
+        <div className="grid">
+          <h2 className="bg-gray-800 w-full rounded mt-2 px-2 py-4 text-white font-semibold"> NFTS</h2>
+          <div className="mt-5 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+           
+              {nftCollection.map((listing) => (
+                  <NFTItem key={listing.id} listing={listing} />
+                ))}
+        
+          </div>
+          
         </div>
       </div>
     </Layout>
   );
 }
+
+
+export default Profile;
